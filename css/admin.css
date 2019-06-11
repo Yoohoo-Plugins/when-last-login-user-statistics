@@ -1,0 +1,32 @@
+.wll_stats_form {
+    background-color: white;
+    padding: 10px;
+    border-radius: 4px;
+    width: 97%;
+    text-align: right;
+}
+
+.wll_stats_form input, .wll_stats_form select {
+    display: inline-block;
+    margin: 3px 0;
+    height: 29px;
+    margin-top: -1px;
+}
+
+.wll_column_50{
+	display: inline-block;
+	width: 49%;
+	padding: 10px 10px 10px 0;
+    vertical-align: top;
+}
+
+.wll_stats_download_button {
+    display: inline-block;
+    width: 50%;
+    text-align: left;
+}
+
+.wll_stats_form form {
+    width: 49%;
+    display: inline-block;
+}
