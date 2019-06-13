@@ -40,9 +40,9 @@ class WhenLastLoginStatistics{
 	public function wll_stats_register_activation(){
 
 		if (! wp_next_scheduled ( 'wll_stats_cron_job_hook' )) {
-			
+
 			wp_schedule_event( time(), 'wll_every_ten_minutes', 'wll_stats_cron_job_hook' );
-	    
+
 	    }
 
 	    $wll_stats_upload_dir = wp_upload_dir();
@@ -64,7 +64,7 @@ class WhenLastLoginStatistics{
 	    }
 
 	    $wll_stats_secret_token = get_option( 'wll_stats_secret_token' );
-	    
+
 	    if( $wll_stats_secret_token == '' || !$wll_stats_secret_token ){
 
 	    	update_option( 'wll_stats_secret_token', md5( time().'when-last-login-user-statistics' ) );
@@ -84,8 +84,8 @@ class WhenLastLoginStatistics{
 
 		$must_send = false;
 
-		$wll_stats_settings = get_option( 'wll_stats_settings' ); 
-		
+		$wll_stats_settings = get_option( 'wll_stats_settings' );
+
  		$settings_frequency = isset( $wll_stats_settings['frequency'] ) ? sanitize_text_field ( $wll_stats_settings['frequency'] ) : "";
 		$frequency_days = isset( $wll_stats_settings['frequency_days'] ) ? sanitize_text_field ( $wll_stats_settings['frequency_days'] ) : "";
 		$frequency_day_num = isset( $wll_stats_settings['frequency_day_num'] ) ? sanitize_text_field ( $wll_stats_settings['frequency_day_num'] ) : "";
@@ -94,7 +94,7 @@ class WhenLastLoginStatistics{
 
 	 	$current_time = current_time( 'timestamp' );
 
-	 	$ret = "";	
+	 	$ret = "";
 
 	 	if( $settings_frequency == 'never' ){
 	 		return;
@@ -112,7 +112,7 @@ class WhenLastLoginStatistics{
 	 		$current_day = date( 'w' );
 
 	 		if( $frequency_days == $current_day ){
- 				
+
  				$new_string_time = strtotime( current_time( 'Y-m-d ' ).$frequency_h.":".$frequency_m.":00" );
 
 		 		if( $current_time >= $new_string_time ){
@@ -126,7 +126,7 @@ class WhenLastLoginStatistics{
 	 		$current_day = date( 'j' );
 
 	 		if( $frequency_day_num == $current_day ){
- 				
+
  				$new_string_time = strtotime( current_time( 'Y-m-d ' ).$frequency_h.":".$frequency_m.":00" );
 
 		 		if( $current_time >= $new_string_time ){
@@ -172,11 +172,11 @@ class WhenLastLoginStatistics{
 			 		}
 
 	 			} else {
- 					
+
  					update_option( 'wll_stats_last_sent_date', array( 'sent_today' => 0, 'date' => current_time( 'Y-m-d' ) ) );
- 					
+
  					$must_send = false;
-	 			
+
 	 			}
 	 		}
 
@@ -185,7 +185,7 @@ class WhenLastLoginStatistics{
 	 		update_option( 'wll_stats_last_sent_date', array( 'sent_today' => 0, 'date' => current_time( 'Y-m-d' ) ) );
 
 	 	}
-	 	
+
 	 	if( $must_send ){
 
 	 		$range_selected = isset( $wll_stats_settings['range_selected'] ) ? sanitize_text_field( $wll_stats_settings['range_selected'] ) : "";
@@ -241,7 +241,7 @@ class WhenLastLoginStatistics{
 		 	$ret .= "</table>";
 
 		 	$recipients = isset( $wll_stats_settings['recipient_address'] ) ? $wll_stats_settings['recipient_address'] : "";
- 		
+
 	 		$recipients_array = explode( ",", $recipients);
 
 		 	$subject = __('When Last Login - Usage Statistics Scheduled Report', 'when-last-login');
@@ -266,14 +266,14 @@ class WhenLastLoginStatistics{
 	            'interval'  => 600,
 	            'display'   => __( 'Every 10 Minutes', 'when-last-login-stats' )
 	    );
-	     
+
 	    return $schedules;
 
 	}
 
 	public function wll_stats_admin_notices(){
 
-		$ret = "";	
+		$ret = "";
 
 		$wll_stats_upload_dir = wp_upload_dir();
 
@@ -312,7 +312,7 @@ class WhenLastLoginStatistics{
 		if(isset($request)){
 
 			if(isset($request['token'])){
-		
+
 				$check_token = get_option('wll_stats_secret_token');
 
 				if($check_token !== false && $request['token'] === $check_token){
@@ -322,14 +322,14 @@ class WhenLastLoginStatistics{
 					$end_date = isset( $request['end_date'] ) ? $request['end_date'] : "";
 
 					$args = array(
-						'range' => $range, 
+						'range' => $range,
 						'start_date' => $start_date,
 						'end_date' => $end_date
 					);
 
 					$return_array['response'] = "Login stats returned successfully";
 					$return_array['code'] = "200";
-					$return_array['body'] = $this::when_last_login_return_stats( $args );					
+					$return_array['body'] = $this::when_last_login_return_stats( $args );
 
 			 	} else {
 					$return_array['response'] = "Secret token is invalid";
@@ -347,7 +347,7 @@ class WhenLastLoginStatistics{
 			$return_array['code'] = "400";
 			$return_array['requirements'] = array("token" => "YOUR_SECRET_TOKEN");
 		}
-		
+
 		return $return_array;
 
 	}
@@ -440,7 +440,7 @@ class WhenLastLoginStatistics{
 
 			wp_reset_postdata();
 
-		} 
+		}
 
 		return $login_record_array;
 
@@ -468,7 +468,7 @@ class WhenLastLoginStatistics{
 	public function wll_stats_page(){
 
 		add_submenu_page( 'when-last-login-settings', __('When Last Login - User Statistics', 'when-last-login-stats'), __('User Statistics', 'when-last-login-stats'), 'manage_options', 'when-last-login-stats', array( $this, 'wll_stats_page_callback' ) );
-	}	
+	}
 
 	public function wll_stats_page_callback(){
 
@@ -488,7 +488,7 @@ class WhenLastLoginStatistics{
 
 		}
 
-		if( isset( $_GET['page'] ) && $_GET['page'] == 'when-last-login-stats' ){			
+		if( isset( $_GET['page'] ) && $_GET['page'] == 'when-last-login-stats' ){
 
 			wp_enqueue_script( 'wll-stats-google-charts' , 'https://www.gstatic.com/charts/loader.js' );
 			wp_enqueue_script( 'jquery' );
@@ -502,15 +502,15 @@ class WhenLastLoginStatistics{
 
 			wp_enqueue_style( 'wll-stats-admin-css', plugins_url( '/css/admin.css', __FILE__ ) );
 
-			$wll_stats_returned = $this::wll_stats_return_user_stats_array( $_GET );								
+			$wll_stats_returned = $this::wll_stats_return_user_stats_array( $_GET );
 
 			wp_enqueue_script( 'wll-stats-admin-script', plugins_url( '/js/admin.js', __FILE__ ) );
 
 			wp_localize_script( 'wll-stats-admin-script', 'wll_stats_users_grouped_by_name_time', $wll_stats_returned['wll_stats_users_grouped_by_name_time'] ); // This is being used
-			wp_localize_script( 'wll-stats-admin-script', 'wll_stats_users_grouped_by_name_time_hourly', $wll_stats_returned['wll_stats_users_grouped_by_name_time_hourly'] );		
+			wp_localize_script( 'wll-stats-admin-script', 'wll_stats_users_grouped_by_name_time_hourly', $wll_stats_returned['wll_stats_users_grouped_by_name_time_hourly'] );
 			wp_localize_script( 'wll-stats-admin-script', 'wll_stats_users_grouped_by_name_count', $wll_stats_returned['wll_stats_users_grouped_by_name_count'] ); // This is being used
 			wp_localize_script( 'wll-stats-admin-script', 'wll_stats_users_grouped_by_name_last_logged', $wll_stats_returned['wll_stats_users_grouped_by_name_last_logged'] );
-		
+
 		}
 
 	}
@@ -522,6 +522,7 @@ class WhenLastLoginStatistics{
 			if( $array['range'] == 'today' ){
 
 				$args = array(
+					'timeout' => 15,
 					'body' => array(
 						'range' => 'today',
 						'token' => get_option( 'wll_stats_secret_token' )
@@ -531,6 +532,7 @@ class WhenLastLoginStatistics{
 			} else if( $array['range'] == '-7days' ){
 
 				$args = array(
+					'timeout' => 15,
 					'body' => array(
 						'range' => '-7days',
 						'token' => get_option( 'wll_stats_secret_token' )
@@ -540,6 +542,7 @@ class WhenLastLoginStatistics{
 			} else if( $array['range'] == '-30days' ){
 
 				$args = array(
+					'timeout' => 15,
 					'body' => array(
 						'range' => '-30days',
 						'token' => get_option( 'wll_stats_secret_token' )
@@ -550,8 +553,9 @@ class WhenLastLoginStatistics{
 
 				$start_date = isset( $array['custom-start'] ) ? $array['custom-start'] : "";
 				$end_date = isset( $array['custom-end'] ) ? $array['custom-end'] : "";
-				
+
 				$args = array(
+					'timeout' => 15,
 					'body' => array(
 						'range' => 'custom',
 						'start_date' => $start_date,
@@ -562,17 +566,18 @@ class WhenLastLoginStatistics{
 
 			} else {
 
-				$args = array( 'body' => array( 'token' => get_option( 'wll_stats_secret_token' ) ) );
+				$args = array( 'timeout' => 15, 'body' => array( 'token' => get_option( 'wll_stats_secret_token' ) ) );
 
 			}
 
 		} else {
 
-			$args = array( 'body' => array( 'token' => get_option( 'wll_stats_secret_token' ) ) );
+			$args = array( 'timeout' => 15, 'body' => array( 'token' => get_option( 'wll_stats_secret_token' ) ) );
 
 		}
 
-		$response = wp_remote_post( get_option('siteurl').'/wp-json/when_last_login_user_stats/v1/return_stats', $args );
+		$response = wp_remote_post( get_rest_url(null, 'when_last_login_user_stats/v1/return_stats'), $args );
+
 
 		$response_body = wp_remote_retrieve_body( $response );
 
@@ -580,6 +585,7 @@ class WhenLastLoginStatistics{
 		$users_grouped_by_name_last_logged = array();
 		$users_grouped_by_name_count = array();
 		$users_grouped_by_name_time_hourly = array();
+		$users_grouped_by_name_time_orig = array();
 		// $the_stuff = array();
 		$agents = array();
 		if( $response_body != "" ){
@@ -614,14 +620,36 @@ class WhenLastLoginStatistics{
 								}
 							}
 						}
-						
+
 						foreach( $users_grouped_by_name_time as $date => $val ){
 							foreach( $val as $agent_name => $agent ){
 								$users_grouped_by_name_count[$date][$agent_name] = array( $agent_name => count( $agent ) );
 							}
 						}
 						// This ^^^ works.. don't ask how or why.. it just does.
-						 
+
+						/**
+						 * Check each array
+						 * If count == 0
+						 * - Then: Set a default to avoid Google Charts from outputting errors
+						 * - We use false to zero out the influence on the chart
+						 * - In some sub array combinations we use zero to zero out the chart
+						 *
+						 * Ignore name/last-login array as this is a dataTable, does not apply
+						*/
+						if(count($users_grouped_by_name_time_hourly) == 0){
+							$users_grouped_by_name_time_hourly[' '] = false;
+						}
+
+						if(count($users_grouped_by_name_count) == 0){
+							$users_grouped_by_name_count[' '][' '] = array(' ' => 0);
+						}
+
+						if(count($users_grouped_by_name_time_orig) == 0){
+							$users_grouped_by_name_time_orig[' '][' '] = array();
+						}
+
+
 						return array(
 							'wll_stats_users_grouped_by_name_time' => $users_grouped_by_name_time_orig,
 							'wll_stats_users_grouped_by_name_time_hourly' => $users_grouped_by_name_time_hourly,
@@ -634,7 +662,26 @@ class WhenLastLoginStatistics{
 
 			}
 
-		}				
+		} else {
+			if(count($users_grouped_by_name_time_hourly) == 0){
+				$users_grouped_by_name_time_hourly[' '] = false;
+			}
+
+			if(count($users_grouped_by_name_count) == 0){
+				$users_grouped_by_name_count[' '][' '] = array(' ' => 0);
+			}
+
+			if(count($users_grouped_by_name_time_orig) == 0){
+				$users_grouped_by_name_time_orig[' '][' '] = array();
+			}
+
+			return array(
+				'wll_stats_users_grouped_by_name_time' => $users_grouped_by_name_time_orig,
+				'wll_stats_users_grouped_by_name_time_hourly' => $users_grouped_by_name_time_hourly,
+				'wll_stats_users_grouped_by_name_count' => $users_grouped_by_name_count,
+				'wll_stats_users_grouped_by_name_last_logged' => $users_grouped_by_name_last_logged
+			);
+		}
 
 	}
 
@@ -648,18 +695,18 @@ class WhenLastLoginStatistics{
 		    $wll_stats_upload_url = $wll_stats_upload_dir['baseurl'].'/when-last-login-user-statistics';
 
 			$img = str_replace( 'data:image/png;base64,', '', $_POST['base64'] );
-			
+
 			$img = str_replace( ' ', '+', $img );
-			
+
 			$data = base64_decode( $img );
 
 			$new_image_file = get_current_user_id().'-'.sanitize_text_field( $_POST['graph'] ).'.png';
 
 			$new_image_url = $wll_stats_upload_url.'/'.$new_image_file;
-			
+
 			if( file_exists( $wll_stats_upload_folder.'/'.$new_image_file ) ){
 
-				unlink( $wll_stats_upload_folder.'/'.$new_image_file );						
+				unlink( $wll_stats_upload_folder.'/'.$new_image_file );
 
 			}
 
@@ -674,7 +721,7 @@ class WhenLastLoginStatistics{
 				$added = $wll_stats_upload_url.'/'.$new_image_file;
 
 			}
-			 
+
 			echo $added;
 
 			wp_die();
@@ -722,13 +769,13 @@ class WhenLastLoginStatistics{
 
 			$html = "<h4>".__('Logins per hour', 'when-last-login-stats')."</h4>";
 			$pdf->writeHTMLCell(0, 0, '', '', $html, 0, 1, 0, true, '', true);
-			$pdf->Image( $wll_stats_upload_url . '/'.$user_id.'-when-last-login-total-agent-hourly.png',  '', '', 0, 0, '', '', 'center', true);	
+			$pdf->Image( $wll_stats_upload_url . '/'.$user_id.'-when-last-login-total-agent-hourly.png',  '', '', 0, 0, '', '', 'center', true);
 
 			$pdf->AddPage();
 
 			$html = "<h4>".__('Total logins per day', 'when-last-login-stats')."</h4>";
 			$pdf->writeHTMLCell(0, 0, '', '', $html, 0, 1, 0, true, '', true);
-			$pdf->Image( $wll_stats_upload_url . '/'.$user_id.'-when-last-login-total-logins-per-day.png',  '', '', 0, 0, '', '', 'center', true);			
+			$pdf->Image( $wll_stats_upload_url . '/'.$user_id.'-when-last-login-total-logins-per-day.png',  '', '', 0, 0, '', '', 'center', true);
 
 			$pdf->Output('when-last-login-user-statistics-report-'.date( 'Y-m-d' ).'.pdf', 'I');
 
@@ -739,17 +786,17 @@ class WhenLastLoginStatistics{
 	public static function wll_stats_time_array(){
 
 		$h = array();
-		
+
 		for( $i = 0; $i <= 23; $i++){
 			$h[] = sprintf('%02d', $i );
 		}
-		
-		$m = array();	
-		
+
+		$m = array();
+
 		for( $i = 0; $i <= 59; $i++){
 			$m[] = sprintf('%02d', $i );
 		}
-		
+
 		$t = array(
 			'hours' 	=> $h,
 			'minutes' 	=> $m
