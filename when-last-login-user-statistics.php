@@ -300,9 +300,19 @@ class WhenLastLoginStatistics{
 
 		register_rest_route('when_last_login_user_stats/v1','/return_stats', array(
 			'methods' => 'GET, POST',
-			'callback' => array( $this, 'wll_return_stats_callback' )
+			'callback' => array( $this, 'wll_return_stats_callback' ),
+			'permission_callback' => array( $this, 'wll_stats_permission_check' ),
 		));
 
+	}
+
+	// Capability check for REST API for admins only.
+	public function wll_stats_permission_check( $request ) {
+		if ( current_user_can( apply_filters( 'wll_rest_api_caps', 'manage_options' ) ) ) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public function wll_return_stats_callback( WP_REST_Request $request ){
