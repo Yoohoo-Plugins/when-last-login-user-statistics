@@ -1,10 +1,10 @@
 <?php
 /**
  * Plugin Name: When Last Login - User Statistics
- * Plugin URI: https://wordpress.org/plugins/when-last-login/
+ * Plugin URI: https://yoohooplugins.com/plugins/when-last-login-user-statistics/
  * Description: Displays user statistics based on user's login activity
  * Version: 1.0
- * Author: YooHooPlugins
+ * Author: Yoohoo Plugins
  * Author URI: https://yoohooplugins.com
  * Text Domain: when-last-login-stats
  * Domain Path: /languages
