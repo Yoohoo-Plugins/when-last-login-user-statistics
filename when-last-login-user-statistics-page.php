@@ -1,7 +1,19 @@
 <div class='wrap'>
 
 	<h2><?php _e('When Last Login - User Statistics', 'when-last-login-stats'); ?></h2>
+	
+	<?php
+		// Check to see if All Login Records are enabled.
+		$wll_settings = get_option( 'wll_settings' );
 
+		if ( empty( $wll_settings['show_all_login_records'] ) ) {
+			?>
+				<div class="notice notice-warning">
+					<p><?php _e( sprintf( "Please enable the %s setting to enable graph data.", "<a href='" . esc_url( admin_url( 'options-general.php?page=when-last-login-settings' ) ) . "'>All Login Records</a>"), 'when-last-login-user-statistics'); ?></p>
+				</div>
+			<?php
+		}
+	?>
 	<div class='wll_stats_page_container'>
 
 		<div class='wll_stats_page_header'>

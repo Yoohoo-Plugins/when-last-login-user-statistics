@@ -14,6 +14,8 @@ class WhenLastLoginStatistics{
 
 	public function __construct(){
 
+		///define( 'WLL_STATS_VERSION', '1.0' );
+
 		add_action( 'rest_api_init', array( $this, 'wll_stats_rest_routes' ) );
 		add_filter( 'wll_settings_page_tabs', array( $this, 'wll_stats_tabs' ) );
 		add_filter( 'wll_settings_page_content', array( $this, 'wll_stats_content' ) );
@@ -297,7 +299,6 @@ class WhenLastLoginStatistics{
 	}
 
 	public function wll_stats_rest_routes() {
-
 		register_rest_route('when_last_login_user_stats/v1','/return_stats', array(
 			'methods' => 'GET, POST',
 			'callback' => array( $this, 'wll_return_stats_callback' ),
@@ -316,7 +317,6 @@ class WhenLastLoginStatistics{
 	}
 
 	public function wll_return_stats_callback( WP_REST_Request $request ){
-
 		$return_array = array();
 
 		if(isset($request)){
@@ -477,12 +477,18 @@ class WhenLastLoginStatistics{
 
 	public function wll_stats_page(){
 
-		add_submenu_page( 'when-last-login-settings', __('When Last Login - User Statistics', 'when-last-login-stats'), __('User Statistics', 'when-last-login-stats'), 'manage_options', 'when-last-login-stats', array( $this, 'wll_stats_page_callback' ) );
+		// Move stats page to "Users" for newer version.
+		if ( defined( 'WLL_VERSION' ) ) {
+			add_submenu_page( 'users.php', __('When Last Login - User Statistics', 'when-last-login-stats'), __('User Statistics', 'when-last-login-stats'), 'manage_options', 'when-last-login-stats', array( $this, 'wll_stats_page_callback' ) );
+		} else {
+			add_submenu_page( 'when-last-login-settings', __('When Last Login - User Statistics', 'when-last-login-stats'), __('User Statistics', 'when-last-login-stats'), 'manage_options', 'when-last-login-stats', array( $this, 'wll_stats_page_callback' ) );
+		}
+
 	}
 
 	public function wll_stats_page_callback(){
 
-		include plugin_dir_path( __FILE__ ).'/when-last-login-user-statistics-page.php';
+		include plugin_dir_path( __FILE__ ) . '/when-last-login-user-statistics-page.php';
 
 	}
 
@@ -586,7 +592,7 @@ class WhenLastLoginStatistics{
 
 		}
 
-		$response = wp_remote_post( get_rest_url(null, 'when_last_login_user_stats/v1/return_stats'), $args );
+		$response = wp_remote_post( get_rest_url( null, 'when_last_login_user_stats/v1/return_stats'), $args );
 
 
 		$response_body = wp_remote_retrieve_body( $response );
