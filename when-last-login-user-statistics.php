@@ -369,7 +369,7 @@ class WhenLastLoginStatistics{
 
 		$wll_version = floatval( get_option( 'wll_current_version' ) );
 
-		if( $wll_version >= 1.3 ){
+		if( $wll_version > 1.2 ){
 
 			global $wpdb;
 
