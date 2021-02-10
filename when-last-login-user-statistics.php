@@ -309,7 +309,7 @@ class WhenLastLoginStatistics{
 	// Capability check for REST API for admins only.
 	public function wll_stats_permission_check( $request ) {
 		
-		if ( current_user_can( apply_filters( 'wll_rest_api_caps', 'manage_options' ) ) ) {
+		if ( $request['token'] == get_option('wll_stats_secret_token') ) {
 			return true;
 		} else {
 			return false;
