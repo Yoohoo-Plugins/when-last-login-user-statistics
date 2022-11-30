@@ -14,8 +14,6 @@ class WhenLastLoginStatistics{
 
 	public function __construct(){
 
-		///define( 'WLL_STATS_VERSION', '1.0' );
-
 		add_action( 'rest_api_init', array( $this, 'wll_stats_rest_routes' ) );
 		add_filter( 'wll_settings_page_tabs', array( $this, 'wll_stats_tabs' ) );
 		add_filter( 'wll_settings_page_content', array( $this, 'wll_stats_content' ) );
@@ -299,6 +297,7 @@ class WhenLastLoginStatistics{
 	}
 
 	public function wll_stats_rest_routes() {
+
 		register_rest_route('when_last_login_user_stats/v1','/return_stats', array(
 			'methods' => 'GET, POST',
 			'callback' => array( $this, 'wll_return_stats_callback' ),
@@ -309,7 +308,8 @@ class WhenLastLoginStatistics{
 
 	// Capability check for REST API for admins only.
 	public function wll_stats_permission_check( $request ) {
-		if ( current_user_can( apply_filters( 'wll_rest_api_caps', 'manage_options' ) ) ) {
+		
+		if ( $request['token'] == get_option('wll_stats_secret_token') ) {
 			return true;
 		} else {
 			return false;
@@ -317,10 +317,10 @@ class WhenLastLoginStatistics{
 	}
 
 	public function wll_return_stats_callback( WP_REST_Request $request ){
+
 		$return_array = array();
 
 		if(isset($request)){
-
 			if(isset($request['token'])){
 
 				$check_token = get_option('wll_stats_secret_token');
@@ -364,93 +364,161 @@ class WhenLastLoginStatistics{
 
 	private function when_last_login_return_stats( $additional_args ){
 
+		$login_record_array = array();
+
 		$additional_args = apply_filters( 'wll_stats_additional_args_filter', $additional_args );
 
-		if( $additional_args['range'] == 'today' ){
+		$wll_version = floatval( get_option( 'wll_current_version' ) );
 
-			$args = array(
-				'posts_per_page' => -1,
-				'post_type' => 'wll_records',
-				'date_query' => array(
-					'after' => 'today',
-					'inclusive' => true
-				)
-			);
+		if( version_compare( $wll_version, 1.2, '>=' ) ){
 
-		} else if( $additional_args['range'] == '-7days' ){
+			global $wpdb;
 
-			$args = array(
-				'posts_per_page' => -1,
-				'post_type' => 'wll_records',
-				'date_query' => array(
-					'before' => '7 Days'
-				)
-			);
+        	$records = $wpdb->prefix.'wll_login_records';
 
-		} else if( $additional_args['range'] == '-30days' ){
+        	$sql = "SELECT * FROM $records ";
 
-			$args = array(
-				'posts_per_page' => -1,
-				'post_type' => 'wll_records',
-				'date_query' => array(
-					'before' => '30 Days'
-				)
-			);
+			if( $additional_args['range'] == 'today' ){
 
-		} else if( $additional_args['range'] == 'custom' ){
+				$sql .= "WHERE `date` > '".date( 'Y-m-d', current_time('timestamp') )."' ORDER BY `id` DESC";
 
-			$new_start_date = strtotime( $additional_args['start_date'] .' - 1 day' );
-			$new_end_date =  strtotime( $additional_args['end_date'] .' + 1 day' );
+			} else if( $additional_args['range'] == '-7days' ){
 
-			$args = array(
-				'posts_per_page' => -1,
-				'post_type' => 'wll_records',
-				'date_query' => array(
-					'after' => date('Y-m-d', $new_start_date ),
-					'before' => date('Y-m-d', $new_end_date ),
-					'inclusive' => true
-				)
-			);
+				$today = date( 'Y-m-d', current_time('timestamp') );
+				$previous = date( 'Y-m-d', strtotime( $today.' - 7 DAY' ) );
+
+				$sql .= "WHERE `date` > '".$previous."' ORDER BY `id` DESC";
+
+			} else if( $additional_args['range'] == '-30days' ){
+
+				$today = date( 'Y-m-d', current_time('timestamp') );
+				$previous = date( 'Y-m-d', strtotime( $today.' - 30 DAY' ) );
+				
+				$sql .= "WHERE `date` > '".$previous."' ORDER BY `id` DESC";
+
+			} else if( $additional_args['range'] == 'custom' ){
+
+				$new_start_date = strtotime( $additional_args['start_date'] .' - 1 day' );
+				$new_end_date =  strtotime( $additional_args['end_date'] .' + 1 day' );
+
+				$sql .= "WHERE `date` > '".$new_start_date."' AND `date` < '".$new_end_date."' ORDER BY `id` DESC";
+
+			} else {
+
+				$sql .= "ORDER BY `id` DESC";
+
+			}
+
+			$args = apply_filters( 'wll_return_stats_wpquery_filter', $sql );
+
+			$login_record_array = array();
+
+			$results = $wpdb->get_results( $sql );
+
+			if( !empty( $results ) ){
+
+				foreach( $results as $result ){
+
+					$activity_last_login = get_user_meta( intval( $result->author ), 'when_last_login', true );
+
+					$login_record_array[] = array(
+						'author_name' => $result->title,
+						'author_id' => $result->author,
+						'date' => strtotime( $result->date ),
+						'last_login_timestamp' => (int) $activity_last_login
+					);
+
+				}
+			}
+			
 
 		} else {
 
-			$args = array(
-				'posts_per_page' => -1,
-				'post_type' => 'wll_records'
-			);
+			if( $additional_args['range'] == 'today' ){
 
-		}
+				$args = array(
+					'posts_per_page' => -1,
+					'post_type' => 'wll_records',
+					'date_query' => array(
+						'after' => 'today',
+						'inclusive' => true
+					)
+				);
 
-		$args = apply_filters( 'wll_return_stats_wpquery_filter', $args );
+			} else if( $additional_args['range'] == '-7days' ){
 
-		$login_record_array = array();
+				$args = array(
+					'posts_per_page' => -1,
+					'post_type' => 'wll_records',
+					'date_query' => array(
+						'before' => '7 Days'
+					)
+				);
 
-		$the_query = new WP_Query( $args );
+			} else if( $additional_args['range'] == '-30days' ){
 
-		if ( $the_query->have_posts() ) {
+				$args = array(
+					'posts_per_page' => -1,
+					'post_type' => 'wll_records',
+					'date_query' => array(
+						'before' => '30 Days'
+					)
+				);
 
-			while ( $the_query->have_posts() ) {
+			} else if( $additional_args['range'] == 'custom' ){
 
-				$the_query->the_post();
+				$new_start_date = strtotime( $additional_args['start_date'] .' - 1 day' );
+				$new_end_date =  strtotime( $additional_args['end_date'] .' + 1 day' );
 
-				$activity_author = get_the_author();
-				$activity_date = get_the_date( 'Y-m-d H:i:s' );
+				$args = array(
+					'posts_per_page' => -1,
+					'post_type' => 'wll_records',
+					'date_query' => array(
+						'after' => date('Y-m-d', $new_start_date ),
+						'before' => date('Y-m-d', $new_end_date ),
+						'inclusive' => true
+					)
+				);
 
-				$activity_last_login = get_the_author_meta( 'when_last_login' );
-				$activity_author_id = get_the_author_meta( 'ID' );
+			} else {
 
-				$login_record_array[] = array(
-					'author_name' => $activity_author,
-					'author_id' => $activity_author_id,
-					'date' => strtotime( $activity_date ),
-					'last_login_timestamp' => (int) $activity_last_login
+				$args = array(
+					'posts_per_page' => -1,
+					'post_type' => 'wll_records'
 				);
 
 			}
 
-			wp_reset_postdata();
+			$args = apply_filters( 'wll_return_stats_wpquery_filter', $args );			
 
-		}
+			$the_query = new WP_Query( $args );
+
+			if ( $the_query->have_posts() ) {
+
+				while ( $the_query->have_posts() ) {
+
+					$the_query->the_post();
+
+					$activity_author = get_the_author();
+					$activity_date = get_the_date( 'Y-m-d H:i:s' );
+
+					$activity_last_login = get_the_author_meta( 'when_last_login' );
+					$activity_author_id = get_the_author_meta( 'ID' );
+
+					$login_record_array[] = array(
+						'author_name' => $activity_author,
+						'author_id' => $activity_author_id,
+						'date' => strtotime( $activity_date ),
+						'last_login_timestamp' => (int) $activity_last_login
+					);
+
+				}
+
+				wp_reset_postdata();
+
+			}
+
+		}		
 
 		return $login_record_array;
 
@@ -477,18 +545,12 @@ class WhenLastLoginStatistics{
 
 	public function wll_stats_page(){
 
-		// Move stats page to "Users" for newer version.
-		if ( defined( 'WLL_VERSION' ) ) {
-			add_submenu_page( 'users.php', __('When Last Login - User Statistics', 'when-last-login-stats'), __('User Statistics', 'when-last-login-stats'), 'manage_options', 'when-last-login-stats', array( $this, 'wll_stats_page_callback' ) );
-		} else {
-			add_submenu_page( 'when-last-login-settings', __('When Last Login - User Statistics', 'when-last-login-stats'), __('User Statistics', 'when-last-login-stats'), 'manage_options', 'when-last-login-stats', array( $this, 'wll_stats_page_callback' ) );
-		}
-
+		add_submenu_page( 'when-last-login-settings', __('When Last Login - User Statistics', 'when-last-login-stats'), __('User Statistics', 'when-last-login-stats'), 'manage_options', 'when-last-login-stats', array( $this, 'wll_stats_page_callback' ) );
 	}
 
 	public function wll_stats_page_callback(){
 
-		include plugin_dir_path( __FILE__ ) . '/when-last-login-user-statistics-page.php';
+		include plugin_dir_path( __FILE__ ).'/when-last-login-user-statistics-page.php';
 
 	}
 
@@ -518,7 +580,7 @@ class WhenLastLoginStatistics{
 
 			wp_enqueue_style( 'wll-stats-admin-css', plugins_url( '/css/admin.css', __FILE__ ) );
 
-			$wll_stats_returned = $this::wll_stats_return_user_stats_array( $_GET );
+			$wll_stats_returned = $this::wll_stats_return_user_stats_array( $_REQUEST );
 
 			wp_enqueue_script( 'wll-stats-admin-script', plugins_url( '/js/admin.js', __FILE__ ) );
 
@@ -592,8 +654,7 @@ class WhenLastLoginStatistics{
 
 		}
 
-		$response = wp_remote_post( get_rest_url( null, 'when_last_login_user_stats/v1/return_stats'), $args );
-
+		$response = wp_remote_post( get_rest_url(null, 'when_last_login_user_stats/v1/return_stats'), $args );
 
 		$response_body = wp_remote_retrieve_body( $response );
 
@@ -617,8 +678,10 @@ class WhenLastLoginStatistics{
 					if( is_array( $statistics ) ){
 
 						foreach( $statistics as $stat ){
-							$agents[] = $stat->author_name;
-							$users_grouped_by_name_time_orig[date( 'Y-m-d', $stat->date )][$stat->author_name][] = date( 'Y-m-d', $stat->date );
+							$author = get_user_by( 'ID', $stat->author_id );
+							
+							$agents[] = $author->user_nicename;
+							$users_grouped_by_name_time_orig[date( 'Y-m-d', $stat->date )][$author->user_nicename][] = date( 'Y-m-d', $stat->date );
 
 							$users_grouped_by_name_time_hourly[date( 'Y-m-d H:00', $stat->date )][] = date( 'Y-m-d H:00', $stat->date );
 
@@ -642,7 +705,6 @@ class WhenLastLoginStatistics{
 								$users_grouped_by_name_count[$date][$agent_name] = array( $agent_name => count( $agent ) );
 							}
 						}
-						// This ^^^ works.. don't ask how or why.. it just does.
 
 						/**
 						 * Check each array
@@ -664,7 +726,6 @@ class WhenLastLoginStatistics{
 						if(count($users_grouped_by_name_time_orig) == 0){
 							$users_grouped_by_name_time_orig[' '][' '] = array();
 						}
-
 
 						return array(
 							'wll_stats_users_grouped_by_name_time' => $users_grouped_by_name_time_orig,
