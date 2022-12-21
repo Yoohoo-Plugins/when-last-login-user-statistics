@@ -626,11 +626,12 @@ class WhenLastLoginStatistics{
 						$agents = array_unique( $agents );
 
 						foreach( $agents as $na ){
+							
 							foreach( $users_grouped_by_name_time_orig as $key => $val ){
 								if( !isset( $users_grouped_by_name_time_orig[$key][$na] ) ){
 									$users_grouped_by_name_time[$key][$na] = array();
 								} else {
-									$users_grouped_by_name_time[$key] = $val;
+									$users_grouped_by_name_time[$key][$na] = $val;
 								}
 							}
 						}
