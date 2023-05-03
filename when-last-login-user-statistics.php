@@ -308,7 +308,8 @@ class WhenLastLoginStatistics{
 
 	// Capability check for REST API for admins only.
 	public function wll_stats_permission_check( $request ) {
-		if ( current_user_can( apply_filters( 'wll_rest_api_caps', 'manage_options' ) ) ) {
+		
+		if ( $request['token'] == get_option('wll_stats_secret_token') ) {
 			return true;
 		} else {
 			return false;
@@ -320,7 +321,6 @@ class WhenLastLoginStatistics{
 		$return_array = array();
 
 		if(isset($request)){
-
 			if(isset($request['token'])){
 
 				$check_token = get_option('wll_stats_secret_token');
@@ -364,7 +364,11 @@ class WhenLastLoginStatistics{
 
 	private function when_last_login_return_stats( $additional_args ){
 
+		$login_record_array = array();
+
 		$additional_args = apply_filters( 'wll_stats_additional_args_filter', $additional_args );
+
+		$wll_version = floatval( get_option( 'wll_current_version' ) );
 
 		if( $additional_args['range'] == 'today' ){
 
@@ -421,9 +425,7 @@ class WhenLastLoginStatistics{
 
 		}
 
-		$args = apply_filters( 'wll_return_stats_wpquery_filter', $args );
-
-		$login_record_array = array();
+		$args = apply_filters( 'wll_return_stats_wpquery_filter', $args );			
 
 		$the_query = new WP_Query( $args );
 
@@ -451,6 +453,7 @@ class WhenLastLoginStatistics{
 			wp_reset_postdata();
 
 		}
+
 
 		return $login_record_array;
 
@@ -512,7 +515,7 @@ class WhenLastLoginStatistics{
 
 			wp_enqueue_style( 'wll-stats-admin-css', plugins_url( '/css/admin.css', __FILE__ ) );
 
-			$wll_stats_returned = $this::wll_stats_return_user_stats_array( $_GET );
+			$wll_stats_returned = $this::wll_stats_return_user_stats_array( $_REQUEST );
 
 			wp_enqueue_script( 'wll-stats-admin-script', plugins_url( '/js/admin.js', __FILE__ ) );
 
@@ -588,7 +591,6 @@ class WhenLastLoginStatistics{
 
 		$response = wp_remote_post( get_rest_url(null, 'when_last_login_user_stats/v1/return_stats'), $args );
 
-
 		$response_body = wp_remote_retrieve_body( $response );
 
 		$users_grouped_by_name_time = array();
@@ -611,8 +613,10 @@ class WhenLastLoginStatistics{
 					if( is_array( $statistics ) ){
 
 						foreach( $statistics as $stat ){
-							$agents[] = $stat->author_name;
-							$users_grouped_by_name_time_orig[date( 'Y-m-d', $stat->date )][$stat->author_name][] = date( 'Y-m-d', $stat->date );
+							$author = get_user_by( 'ID', $stat->author_id );
+							
+							$agents[] = $author->user_nicename;
+							$users_grouped_by_name_time_orig[date( 'Y-m-d', $stat->date )][$author->user_nicename][] = date( 'Y-m-d', $stat->date );
 
 							$users_grouped_by_name_time_hourly[date( 'Y-m-d H:00', $stat->date )][] = date( 'Y-m-d H:00', $stat->date );
 
@@ -622,11 +626,12 @@ class WhenLastLoginStatistics{
 						$agents = array_unique( $agents );
 
 						foreach( $agents as $na ){
+							
 							foreach( $users_grouped_by_name_time_orig as $key => $val ){
 								if( !isset( $users_grouped_by_name_time_orig[$key][$na] ) ){
 									$users_grouped_by_name_time[$key][$na] = array();
 								} else {
-									$users_grouped_by_name_time[$key] = $val;
+									$users_grouped_by_name_time[$key][$na] = $val;
 								}
 							}
 						}
@@ -636,7 +641,6 @@ class WhenLastLoginStatistics{
 								$users_grouped_by_name_count[$date][$agent_name] = array( $agent_name => count( $agent ) );
 							}
 						}
-						// This ^^^ works.. don't ask how or why.. it just does.
 
 						/**
 						 * Check each array
@@ -658,7 +662,6 @@ class WhenLastLoginStatistics{
 						if(count($users_grouped_by_name_time_orig) == 0){
 							$users_grouped_by_name_time_orig[' '][' '] = array();
 						}
-
 
 						return array(
 							'wll_stats_users_grouped_by_name_time' => $users_grouped_by_name_time_orig,

@@ -1,9 +1,9 @@
 <tr>
-	<td colspan="2"><h2><?php _e('When Last Login - User Statistics Settings', 'when-last-login-stats'); ?></h2><small><?php _e('Please note that scheduled reports only contain tabulated data as graphs cannot be rendered out of the browser when being generated', 'when-last-login-stats'); ?></small></td>
+	<td colspan="2"><h2><?php esc_html_e('When Last Login - User Statistics Settings', 'when-last-login-stats'); ?></h2><small><?php _e('Please note that scheduled reports only contain tabulated data as graphs cannot be rendered out of the browser when being generated', 'when-last-login-stats'); ?></small></td>
 </tr>
 <?php 
 
-	$wll_stats_settings = get_option( 'wll_stats_settings' ); 
+	$wll_stats_settings = get_option( 'wll_stats_settings' );
 
 	$settings_frequency = isset( $wll_stats_settings['frequency'] ) ? sanitize_text_field ( $wll_stats_settings['frequency'] ) : "";
 	$frequency_days = isset( $wll_stats_settings['frequency_days'] ) ? sanitize_text_field ( $wll_stats_settings['frequency_days'] ) : "";
